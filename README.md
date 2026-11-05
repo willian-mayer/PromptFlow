@@ -137,6 +137,3 @@ PromptFlow/
 - This source repository is not an installer. For a download-and-double-click experience, publish the **built** artifacts in GitHub Releases.
 - Add a `LICENSE` file before claiming that the project is open source under a particular license.
 
-## Development status
-
-The Python files have been syntax-checked, but this updated release has **not** been tested in a graphical macOS or Windows environment here. Please test on both architectures and Windows before publishing official binaries.
