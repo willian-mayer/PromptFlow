@@ -3,7 +3,7 @@ import sys
 import time
 from pathlib import Path
 
-from PySide6.QtCore import Qt, QThread, Signal, QTimer, QRect
+from PySide6.QtCore import Qt, QThread, Signal, QTimer, QRect, QSettings
 from PySide6.QtGui import QIcon, QFont, QFontMetrics, QPainter, QColor
 from PySide6.QtWidgets import (
     QApplication, QMainWindow, QWidget, QVBoxLayout, QHBoxLayout, QLabel,
@@ -194,6 +194,7 @@ class MainWindow(QMainWindow):
     # Interfaz limpia: biblioteca, editor y lector sin distracciones.
     def __init__(self):
         super().__init__()
+        self.settings = QSettings("PromptFlow", "PromptFlow")
         self.setWindowTitle("PromptFlow")
         self.resize(1250, 780)
         self.setMinimumSize(780, 540)
@@ -325,16 +326,25 @@ class MainWindow(QMainWindow):
         controls.addWidget(QLabel("Speed"))
         self.speed = QSlider(Qt.Orientation.Horizontal)
         self.speed.setRange(10, 180)
-        self.speed.setValue(45)
+        saved_speed = self.settings.value("reading_speed", 45, type=int)
+        self.speed.setValue(max(10, min(180, saved_speed)))
+        self.speed.valueChanged.connect(self.save_preferences)
         controls.addWidget(self.speed, 1)
         controls.addWidget(QLabel("Text"))
         self.font_size = QSlider(Qt.Orientation.Horizontal)
         self.font_size.setRange(28, 100)
-        self.font_size.setValue(54)
+        saved_font_size = self.settings.value("font_size", 54, type=int)
+        self.font_size.setValue(max(28, min(100, saved_font_size)))
         self.font_size.valueChanged.connect(self.change_font)
+        self.font_size.valueChanged.connect(self.save_preferences)
+        self.change_font(self.font_size.value())
         controls.addWidget(self.font_size, 1)
-        self.mirror = QCheckBox("Mirror")
+        self.mirror = QCheckBox("Mirror mode")
+        saved_mirror = self.settings.value("mirror_mode", False, type=bool)
+        self.mirror.setChecked(saved_mirror)
         self.mirror.toggled.connect(self.set_mirror)
+        self.mirror.toggled.connect(self.save_preferences)
+        self.set_mirror(self.mirror.isChecked())
         controls.addWidget(self.mirror)
         layout.addWidget(bottom)
 
@@ -391,6 +401,12 @@ class MainWindow(QMainWindow):
     def set_mirror(self, enabled):
         self.canvas.mirrored = enabled
         self.canvas.update()
+
+    def save_preferences(self, *args):
+        self.settings.setValue("reading_speed", self.speed.value())
+        self.settings.setValue("font_size", self.font_size.value())
+        self.settings.setValue("mirror_mode", self.mirror.isChecked())
+        self.settings.sync()
 
     def toggle_play(self):
         self.playing = not self.playing
